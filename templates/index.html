@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mumbai Map Navigator</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            padding: 20px 0;
+            background-color: #ecf0f1;
+            margin-top: 0;
+        }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        #map {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        p {
+            margin: 10px 0;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mumbai Map Navigator</h1>
+    <div class="container">
+        <div>
+            <select id="start">
+                <option value="">Select start location</option>
+                {% for location in locations %}
+                <option value="{{ location }}">{{ location }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <select id="end">
+                <option value="">Select end location</option>
+                {% for location in locations %}
+                <option value="{{ location }}">{{ location }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button onclick="findPath()">Find Path</button>
+        <div id="result"></div>
+        <div id="map"></div>
+    </div>
+
+    <script>
+        function findPath() {
+            var start = $('#start').val();
+            var end = $('#end').val();
+            $.post('/find_path', { start: start, end: end }, function(data) {
+                if (data.error) {
+                    $('#result').html('<p class="error">' + data.error + '</p>');
+                    if (data.start_suggestions) {
+                        $('#result').append('<p>Did you mean one of these for start location? ' + data.start_suggestions.join(', ') + '</p>');
+                    }
+                    if (data.end_suggestions) {
+                        $('#result').append('<p>Did you mean one of these for end location? ' + data.end_suggestions.join(', ') + '</p>');
+                    }
+                } else {
+                    $('#result').html(
+                        '<h2>Path from ' + data.start + ' to ' + data.end + '</h2>' +
+                        '<p><strong>Route:</strong> ' + data.path + '</p>' +
+                        '<p><strong>Total distance:</strong> ' + data.distance + ' km</p>' +
+                        '<p><strong>Estimated travel time:</strong> ' + data.time + ' minutes</p>' +
+                        '<p><strong>Estimated fuel consumption:</strong> ' + data.fuel.toFixed(2) + ' liters</p>'
+                    );
+                    $('#map').html(data.map_html);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
